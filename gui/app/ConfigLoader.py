@@ -7,17 +7,35 @@ from typing import List
 
 @dataclass
 class DeviceConfig:
-    uid:  str
-    type: str
-    port: int
+    """Parsed representation of one entry from config/devices.json."""
+    uid:  str   # Unique instance identifier, e.g. "tcu-01".
+    type: str   # Device type name, e.g. "TemperatureControlUnit".
+    port: int   # UDP port the device simulator listens on.
 
 
 class ConfigLoader:
+    """Reads config/devices.json and exposes the device list.
+
+    Expected JSON format::
+
+        {
+          "devices": [
+            { "uid": "tcu-01", "type": "TemperatureControlUnit", "port": 9001 },
+            { "uid": "gd-01",  "type": "GarageDoor",             "port": 9003 }
+          ]
+        }
+
+    Raises:
+        FileNotFoundError: if the config file does not exist.
+        ValueError:        if the file is missing the ``devices`` array.
+    """
+
     def __init__(self, config_path: str) -> None:
         self._path    = Path(config_path)
         self.devices: List[DeviceConfig] = []
 
     def load(self) -> None:
+        """Parse the configuration file. Must be called before get_devices()."""
         if not self._path.exists():
             raise FileNotFoundError(f"Config not found: {self._path}")
         with open(self._path) as f:
@@ -30,4 +48,5 @@ class ConfigLoader:
         ]
 
     def get_devices(self) -> List[DeviceConfig]:
+        """Return the device list populated by the most recent call to load()."""
         return self.devices

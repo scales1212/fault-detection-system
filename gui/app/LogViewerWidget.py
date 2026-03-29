@@ -11,17 +11,31 @@ from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
 # Only lines containing one of these tags are shown in the GUI.
-# The full log file still receives every entry.
+# The full log file still receives every entry (SEND, RECV, TIMEOUT, …).
 _SHOW_TAGS = ("[FAULT:FAIL]", "[FAULT:PASS]", "[GROUP:FAIL]", "[GROUP:PASS]")
 
 
 def _norm(path: str) -> str:
-    """Normalise a path for comparison: absolute + OS case rules."""
+    """Normalise a path for reliable comparison on Windows.
+
+    Uses os.path.normcase so that drive-letter case differences and mixed
+    separators do not cause the watchdog event path to be mistakenly ignored.
+    """
     return os.path.normcase(os.path.abspath(path))
 
 
 class _LogWatcher(FileSystemEventHandler, QThread):
-    """Tails the log file in a background QThread; emits new_lines on change."""
+    """Tails the log file in a background QThread and emits new lines on change.
+
+    Extends both FileSystemEventHandler (watchdog) and QThread (Qt) so that
+    the watchdog Observer can run on a background thread while new line data
+    is delivered to the GUI thread via a Qt signal.
+
+    Attributes:
+        new_lines: Emitted with a list of raw log lines whenever new data is
+                   appended to the watched file.
+    """
+
     new_lines = pyqtSignal(list)
 
     def __init__(self, log_path: str) -> None:
@@ -29,29 +43,37 @@ class _LogWatcher(FileSystemEventHandler, QThread):
         QThread.__init__(self)
         self._log_path_norm = _norm(log_path)
         self._log_path      = Path(log_path)
-        self._offset        = 0
+        self._offset        = 0           # byte offset for incremental reads
         self._observer      = Observer()
 
     def run(self) -> None:
+        """QThread entry point: read any existing content, then start watching."""
         self._read_new_lines()
         self._observer.schedule(self, str(self._log_path.parent), recursive=False)
         self._observer.start()
         self._observer.join()
 
     def stop_watching(self) -> None:
+        """Stop the watchdog observer (call before QThread.wait())."""
         self._observer.stop()
 
-    # Handle both on_created (file appears after watcher starts) and on_modified
     def on_created(self, event) -> None:
+        """Handle the case where the log file appears after the watcher starts.
+
+        Resets the byte offset to zero so the entire file is read from scratch.
+        This can happen if the monitor starts after the GUI.
+        """
         if not event.is_directory and _norm(event.src_path) == self._log_path_norm:
-            self._offset = 0          # reset so we read from the beginning
+            self._offset = 0
             self._read_new_lines()
 
     def on_modified(self, event) -> None:
+        """Handle incremental appends to the log file (the common case)."""
         if not event.is_directory and _norm(event.src_path) == self._log_path_norm:
             self._read_new_lines()
 
     def _read_new_lines(self) -> None:
+        """Read bytes appended since the last read and emit them as lines."""
         if not self._log_path.exists():
             return
         try:
@@ -68,14 +90,31 @@ class _LogWatcher(FileSystemEventHandler, QThread):
 
 
 class LogViewerWidget(QWidget):
+    """Read-only log panel that displays fault state-change lines in colour.
+
+    Watches the log file in a background thread (via _LogWatcher) and appends
+    new lines to a QTextEdit whenever the monitor writes them.  Lines that do
+    not contain a recognised fault tag are filtered out — only FAULT/GROUP
+    state-change entries appear.
+
+    Colour scheme:
+        - ``[FAULT:FAIL]`` / ``[GROUP:FAIL]`` → red  (#e53935)
+        - ``[FAULT:PASS]`` / ``[GROUP:PASS]`` → green (#43a047)
+    """
+
     _COLOURS = {
-        "[FAULT:FAIL]": QColor("#e53935"),   # red
+        "[FAULT:FAIL]": QColor("#e53935"),
         "[GROUP:FAIL]": QColor("#e53935"),
-        "[FAULT:PASS]": QColor("#43a047"),   # green
+        "[FAULT:PASS]": QColor("#43a047"),
         "[GROUP:PASS]": QColor("#43a047"),
     }
 
     def __init__(self, log_path: str, parent=None) -> None:
+        """
+        Args:
+            log_path: Absolute or relative path to fault_monitor.log.
+            parent:   Optional Qt parent widget.
+        """
         super().__init__(parent)
 
         layout = QVBoxLayout(self)
@@ -92,14 +131,20 @@ class LogViewerWidget(QWidget):
         self._watcher.new_lines.connect(self._append_lines)
 
     def start_watching(self) -> None:
+        """Start the background file-watcher thread."""
         self._watcher.start()
 
     def stop_watching(self) -> None:
+        """Stop the watcher and wait for the background thread to finish."""
         self._watcher.stop_watching()
         self._watcher.wait()
 
     def _append_lines(self, lines: List[str]) -> None:
-        # Show only fault/group state-change lines — filter out SEND/RECV/TIMEOUT noise
+        """Filter and append lines to the text widget on the GUI thread.
+
+        Only lines containing a tag from ``_SHOW_TAGS`` are displayed.
+        Each line is coloured based on the first matching tag.
+        """
         visible = [ln for ln in lines if any(tag in ln for tag in _SHOW_TAGS)]
         if not visible:
             return

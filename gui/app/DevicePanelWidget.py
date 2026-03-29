@@ -11,8 +11,21 @@ from .FaultInjector import FaultInjector
 
 
 class DevicePanelWidget(QWidget):
+    """Scrollable panel containing one DeviceCardWidget per device instance.
+
+    Iterates the device list from config/devices.json and creates a card for
+    each entry.  All cards share a single FaultInjector instance so their UDP
+    sockets are not duplicated.
+    """
+
     def __init__(self, devices: List[DeviceConfig], injector: FaultInjector,
                  parent=None) -> None:
+        """
+        Args:
+            devices:  Parsed device list from ConfigLoader.
+            injector: Shared FaultInjector passed down to each DeviceCardWidget.
+            parent:   Optional Qt parent widget.
+        """
         super().__init__(parent)
 
         outer = QVBoxLayout(self)
