@@ -20,14 +20,18 @@ nlohmann::json GarageDoor::build_response() {
 }
 
 nlohmann::json GarageDoor::handle_command(const nlohmann::json& cmd) {
-    if (cmd.contains("inject")) {
-        const auto& inj = cmd.at("inject");
-        if (inj.contains("garage_open")  && inj["garage_open"].get<bool>())
-            injected_garage_open_  = true;
-        if (inj.contains("light_on")     && inj["light_on"].get<bool>())
-            injected_light_on_     = true;
-        if (inj.contains("over_voltage") && inj["over_voltage"].get<bool>())
-            injected_over_voltage_ = true;
+    const std::string command = cmd.value("command", "");
+
+    // Inject-only command from GUI: set latches, return null (no UDP response sent).
+    if (command == "inject") {
+        if (cmd.contains("inject")) {
+            const auto& inj = cmd.at("inject");
+            if (inj.value("garage_open",  false)) injected_garage_open_  = true;
+            if (inj.value("light_on",     false)) injected_light_on_     = true;
+            if (inj.value("over_voltage", false)) injected_over_voltage_ = true;
+        }
+        return nlohmann::json();  // null — DeviceSimulator must not send a response
     }
+
     return build_response();
 }

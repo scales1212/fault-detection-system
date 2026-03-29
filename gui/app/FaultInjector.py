@@ -13,8 +13,7 @@ class FaultInjector:
         """Send an inject command that sets field_name=true for one response cycle."""
         payload = json.dumps({
             "uid":     uid,
-            "command": "poll",
-            "value":   0,
+            "command": "inject",
             "inject":  {field_name: True},
         })
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:

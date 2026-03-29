@@ -41,7 +41,7 @@ def test_inject_sends_correct_json():
     assert len(received) == 1
     payload = json.loads(received[0])
     assert payload["uid"]     == "tcu-01"
-    assert payload["command"] == "poll"
+    assert payload["command"] == "inject"
     assert payload["inject"]["overheating"] is True
 
 

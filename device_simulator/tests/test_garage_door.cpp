@@ -1,53 +1,64 @@
 #include <gtest/gtest.h>
 #include "GarageDoor.hpp"
 
+static const nlohmann::json kPoll = {{"uid","gd-test"},{"command","poll"},{"value",0}};
+
 // Normal poll — all faults false
 TEST(GarageDoor, NormalResponseFaultsFalse) {
     GarageDoor gd("gd-test");
-    nlohmann::json cmd = {{"uid","gd-test"},{"command","poll"},{"value",0}};
-    auto resp = gd.handle_command(cmd);
+    auto resp = gd.handle_command(kPoll);
     EXPECT_FALSE(resp["garage_open"].get<bool>());
     EXPECT_FALSE(resp["light_on"].get<bool>());
     EXPECT_FALSE(resp["over_voltage"].get<bool>());
     EXPECT_EQ(resp["uid"].get<std::string>(), "gd-test");
 }
 
-// Each fault field can be injected independently and latches reset
-TEST(GarageDoor, InjectGarageOpenFiresOnce) {
+// Inject command returns null
+TEST(GarageDoor, InjectCommandReturnsNull) {
     GarageDoor gd("gd-test");
-    nlohmann::json inject = {{"uid","gd-test"},{"command","poll"},{"value",0},
-                              {"inject",{{"garage_open",true}}}};
-    auto r1 = gd.handle_command(inject);
+    nlohmann::json inject = {{"uid","gd-test"},{"command","inject"},{"inject",{{"garage_open",true}}}};
+    auto r = gd.handle_command(inject);
+    EXPECT_TRUE(r.is_null());
+}
+
+// garage_open latch fires on next poll then clears
+TEST(GarageDoor, InjectGarageOpenFiresOnNextPoll) {
+    GarageDoor gd("gd-test");
+    nlohmann::json inject = {{"uid","gd-test"},{"command","inject"},{"inject",{{"garage_open",true}}}};
+    gd.handle_command(inject);
+
+    auto r1 = gd.handle_command(kPoll);
     EXPECT_TRUE(r1["garage_open"].get<bool>());
     EXPECT_FALSE(r1["light_on"].get<bool>());
     EXPECT_FALSE(r1["over_voltage"].get<bool>());
 
-    nlohmann::json normal = {{"uid","gd-test"},{"command","poll"},{"value",0}};
-    auto r2 = gd.handle_command(normal);
+    auto r2 = gd.handle_command(kPoll);
     EXPECT_FALSE(r2["garage_open"].get<bool>());
 }
 
-TEST(GarageDoor, InjectLightOnFiresOnce) {
+// light_on latch fires on next poll then clears
+TEST(GarageDoor, InjectLightOnFiresOnNextPoll) {
     GarageDoor gd("gd-test");
-    nlohmann::json inject = {{"uid","gd-test"},{"command","poll"},{"value",0},
-                              {"inject",{{"light_on",true}}}};
-    auto r1 = gd.handle_command(inject);
+    nlohmann::json inject = {{"uid","gd-test"},{"command","inject"},{"inject",{{"light_on",true}}}};
+    gd.handle_command(inject);
+
+    auto r1 = gd.handle_command(kPoll);
     EXPECT_TRUE(r1["light_on"].get<bool>());
 
-    nlohmann::json normal = {{"uid","gd-test"},{"command","poll"},{"value",0}};
-    auto r2 = gd.handle_command(normal);
+    auto r2 = gd.handle_command(kPoll);
     EXPECT_FALSE(r2["light_on"].get<bool>());
 }
 
-TEST(GarageDoor, InjectOverVoltageFiresOnce) {
+// over_voltage latch fires on next poll then clears
+TEST(GarageDoor, InjectOverVoltageFiresOnNextPoll) {
     GarageDoor gd("gd-test");
-    nlohmann::json inject = {{"uid","gd-test"},{"command","poll"},{"value",0},
-                              {"inject",{{"over_voltage",true}}}};
-    auto r1 = gd.handle_command(inject);
+    nlohmann::json inject = {{"uid","gd-test"},{"command","inject"},{"inject",{{"over_voltage",true}}}};
+    gd.handle_command(inject);
+
+    auto r1 = gd.handle_command(kPoll);
     EXPECT_TRUE(r1["over_voltage"].get<bool>());
 
-    nlohmann::json normal = {{"uid","gd-test"},{"command","poll"},{"value",0}};
-    auto r2 = gd.handle_command(normal);
+    auto r2 = gd.handle_command(kPoll);
     EXPECT_FALSE(r2["over_voltage"].get<bool>());
 }
 

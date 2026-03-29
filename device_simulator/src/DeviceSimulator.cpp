@@ -1,5 +1,5 @@
 #include "DeviceSimulator.hpp"
-#include <iostream>
+#include <iostream>   // cerr for parse errors only
 #include <nlohmann/json.hpp>
 
 DeviceSimulator::DeviceSimulator(std::unique_ptr<IDevice> device, uint16_t port)
@@ -7,8 +7,6 @@ DeviceSimulator::DeviceSimulator(std::unique_ptr<IDevice> device, uint16_t port)
 
 void DeviceSimulator::run() {
     running_ = true;
-    std::cout << "[" << device_->get_type() << "] uid=" << device_->get_uid()
-              << " listening on port " << "\n";
 
     while (running_) {
         auto pkt = socket_.recv_from(200);
@@ -23,7 +21,8 @@ void DeviceSimulator::run() {
         }
 
         nlohmann::json resp = device_->handle_command(cmd);
-        socket_.send_to(resp.dump(), pkt->sender);
+        if (!resp.is_null())
+            socket_.send_to(resp.dump(), pkt->sender);
     }
 }
 

@@ -14,12 +14,16 @@ FaultLogger::FaultLogger(const std::string& log_path) {
     file_sink->set_pattern(pattern);
     console_sink->set_pattern(pattern);
 
+    // Console: only errors — no operational noise on stdout
+    console_sink->set_level(spdlog::level::err);
+
     logger_ = std::make_shared<spdlog::logger>(
         "fault_monitor",
         spdlog::sinks_init_list{file_sink, console_sink});
 
     logger_->set_level(spdlog::level::trace);
-    logger_->flush_on(spdlog::level::info);
+    // Flush the file on every message so the GUI tail never misses an entry
+    logger_->flush_on(spdlog::level::trace);
 }
 
 void FaultLogger::log_send(const std::string& uid, const std::string& payload) {
@@ -62,4 +66,8 @@ void FaultLogger::log_group_transition(const std::string& group_id, FaultState s
         logger_->warn("[GROUP:FAIL]  group={}", group_id);
     else
         logger_->info("[GROUP:PASS]  group={}", group_id);
+}
+
+void FaultLogger::log_cycle_overrun(long overrun_ms) {
+    logger_->warn("[OVERRUN]  cycle late by {}ms", overrun_ms);
 }

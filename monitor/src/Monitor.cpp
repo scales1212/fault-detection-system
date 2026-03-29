@@ -1,6 +1,5 @@
 #include "Monitor.hpp"
 #include <chrono>
-#include <iostream>
 #include <thread>
 
 Monitor::Monitor(const std::string& config_path, const std::string& log_path)
@@ -23,7 +22,6 @@ void Monitor::init_proxies() {
 void Monitor::run() {
     using clock = std::chrono::steady_clock;
     running_ = true;
-    std::cout << "Monitor running at 50Hz — " << proxies_.size() << " device(s)\n";
 
     while (running_) {
         auto cycle_start = clock::now();
@@ -34,9 +32,8 @@ void Monitor::run() {
         if (now < deadline)
             std::this_thread::sleep_until(deadline);
         else
-            std::cerr << "[WARN] Cycle overrun by "
-                      << std::chrono::duration_cast<std::chrono::milliseconds>(now - deadline).count()
-                      << "ms\n";
+            logger_.log_cycle_overrun(
+                std::chrono::duration_cast<std::chrono::milliseconds>(now - deadline).count());
     }
 }
 

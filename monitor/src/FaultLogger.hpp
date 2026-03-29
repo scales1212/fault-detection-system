@@ -20,6 +20,8 @@ public:
     void log_group_transition(const std::string& group_id,
                               FaultState         state);
 
+    void log_cycle_overrun(long overrun_ms);
+
 private:
     std::shared_ptr<spdlog::logger> logger_;
 };
