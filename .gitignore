@@ -1,0 +1,29 @@
+# Generated source files (recreated by codegen/codegen.py)
+generated/
+
+# CMake build output
+build/
+out/
+cmake-build-*/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+
+# Log files produced at runtime
+*.log
+
+# IDE / editor
+.vscode/
+.idea/
+*.user
+*.suo
+
+# Windows
+Thumbs.db
+desktop.ini

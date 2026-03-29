@@ -1,0 +1,29 @@
+#pragma once
+#include <string>
+#include <nlohmann/json.hpp>
+
+struct {{ message_name }} {
+{% for field in fields %}
+    {{ cpp_type(field.type) }} {{ field.name }}{};
+{% endfor %}
+
+    static {{ message_name }} from_json(const nlohmann::json& j);
+    nlohmann::json to_json() const;
+};
+
+inline {{ message_name }} {{ message_name }}::from_json(const nlohmann::json& j) {
+    {{ message_name }} msg;
+{% for field in fields %}
+    if (j.contains("{{ field.name }}")) msg.{{ field.name }} = j.at("{{ field.name }}").get<{{ cpp_type(field.type) }}>();
+{% endfor %}
+    return msg;
+}
+
+inline nlohmann::json {{ message_name }}::to_json() const {
+    return nlohmann::json{
+{% for field in fields %}
+        {"{{ field.name }}", {{ field.name }}}{% if not loop.last %},{% endif %}
+
+{% endfor %}
+    };
+}

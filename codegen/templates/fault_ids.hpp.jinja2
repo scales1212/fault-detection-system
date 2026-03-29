@@ -1,0 +1,29 @@
+#pragma once
+#include <map>
+#include <string>
+#include <utility>
+#include <vector>
+
+enum class FaultState {
+    UNDEFINED = 0,
+    PASS      = 1,
+    FAIL      = 2
+};
+
+struct FaultId {
+    std::string              id;
+    int                      numeric_id;
+    std::string              device_type;
+    std::string              field;
+    std::vector<std::string> groups;
+};
+
+inline const std::map<std::pair<std::string, std::string>, FaultId>& getFaultIdRegistry() {
+    static const std::map<std::pair<std::string, std::string>, FaultId> registry = {
+{% for fid in fault_ids %}
+        {{"{"}}{"{{ fid.device_type }}", "{{ fid.field }}"}, FaultId{"{{ fid.id }}", {{ fid.numeric_id }}, "{{ fid.device_type }}", "{{ fid.field }}", {{ "{" }}{% for g in fid.groups %}"{{ g }}"{% if not loop.last %}, {% endif %}{% endfor %}{{ "}" }}}{{ "}" }}{% if not loop.last %},{% endif %}
+
+{% endfor %}
+    };
+    return registry;
+}

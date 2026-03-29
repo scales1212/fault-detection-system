@@ -1,0 +1,7 @@
+{
+  "devices": [
+    { "uid": "tcu-01", "type": "TemperatureControlUnit", "port": 9001 },
+    { "uid": "tcu-02", "type": "TemperatureControlUnit", "port": 9002 },
+    { "uid": "gd-01",  "type": "GarageDoor",             "port": 9003 }
+  ]
+}

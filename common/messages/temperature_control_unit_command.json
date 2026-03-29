@@ -1,0 +1,8 @@
+{
+  "message_name": "TemperatureControlUnitCommand",
+  "fields": [
+    { "name": "uid",     "type": "string" },
+    { "name": "command", "type": "string" },
+    { "name": "value",   "type": "float"  }
+  ]
+}

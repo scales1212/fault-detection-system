@@ -1,0 +1,10 @@
+{
+  "message_name": "GarageDoorResponse",
+  "fields": [
+    { "name": "uid",          "type": "string" },
+    { "name": "command",      "type": "string" },
+    { "name": "garage_open",  "type": "bool"   },
+    { "name": "light_on",     "type": "bool"   },
+    { "name": "over_voltage", "type": "bool"   }
+  ]
+}

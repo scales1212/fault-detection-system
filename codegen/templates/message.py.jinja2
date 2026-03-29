@@ -1,0 +1,27 @@
+from __future__ import annotations
+from dataclasses import dataclass, field
+from typing import Dict, Any
+
+
+@dataclass
+class {{ message_name }}:
+{% for f in fields %}
+    {{ f.name }}: {{ py_type(f.type) }} = {{ py_default(f.type) }}
+{% endfor %}
+
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> "{{ message_name }}":
+        return cls(
+{% for f in fields %}
+            {{ f.name }}=d.get("{{ f.name }}", {{ py_default(f.type) }}){% if not loop.last %},{% endif %}
+
+{% endfor %}
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+{% for f in fields %}
+            "{{ f.name }}": self.{{ f.name }}{% if not loop.last %},{% endif %}
+
+{% endfor %}
+        }

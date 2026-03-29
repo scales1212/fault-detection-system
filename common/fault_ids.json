@@ -1,0 +1,39 @@
+{
+  "fault_ids": [
+    {
+      "id": "TCU_OVERHEAT",
+      "numeric_id": 1,
+      "device_type": "TemperatureControlUnit",
+      "field": "overheating",
+      "groups": ["temperature", "safety"]
+    },
+    {
+      "id": "TCU_OUT_OF_BOUNDS",
+      "numeric_id": 2,
+      "device_type": "TemperatureControlUnit",
+      "field": "out_of_bounds_temp",
+      "groups": ["temperature"]
+    },
+    {
+      "id": "GD_OPEN",
+      "numeric_id": 3,
+      "device_type": "GarageDoor",
+      "field": "garage_open",
+      "groups": ["garage", "security"]
+    },
+    {
+      "id": "GD_LIGHT",
+      "numeric_id": 4,
+      "device_type": "GarageDoor",
+      "field": "light_on",
+      "groups": ["garage"]
+    },
+    {
+      "id": "GD_OVERVOLT",
+      "numeric_id": 5,
+      "device_type": "GarageDoor",
+      "field": "over_voltage",
+      "groups": ["garage", "safety"]
+    }
+  ]
+}

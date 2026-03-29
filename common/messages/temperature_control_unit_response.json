@@ -1,0 +1,11 @@
+{
+  "message_name": "TemperatureControlUnitResponse",
+  "fields": [
+    { "name": "uid",                "type": "string" },
+    { "name": "command",            "type": "string" },
+    { "name": "current_temp",       "type": "float"  },
+    { "name": "set_temp",           "type": "float"  },
+    { "name": "overheating",        "type": "bool"   },
+    { "name": "out_of_bounds_temp", "type": "bool"   }
+  ]
+}

@@ -1,0 +1,5 @@
+PyQt6>=6.7.0
+watchdog>=4.0.0
+pytest>=8.0.0
+pytest-qt>=4.4.0
+Jinja2>=3.1.0
